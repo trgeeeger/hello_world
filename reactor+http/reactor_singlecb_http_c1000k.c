@@ -23,7 +23,7 @@
 #define MAX_EPOLL_EVENTS	1024
 #define RESOURCE_LENGTH	1024
 
-#define SERVER_PORT			8888
+#define SERVER_PORT			8885
 #define PORT_COUNT			1
 
 typedef int NCALLBACK(int ,int, void*);
@@ -33,7 +33,7 @@ typedef int NCALLBACK(int ,int, void*);
 #define HTTP_METHOD_POST	1
 
 
-#define HTTP_WEB_ROOT	"/home/king/share/0voice2207/2.1.3_webserver/html"
+#define HTTP_WEB_ROOT	"/home/wfh/hello_world/reactor+http/a.html"
 
 
 struct ntyevent {
@@ -157,11 +157,12 @@ int nty_http_request(struct ntyevent *ev) {
 		while(linebuffer[sizeof("GET ") + i] != ' ') i ++;
 		linebuffer[sizeof("GET ") + i] = '\0';
 
-		sprintf(ev->resource, "%s/%s", HTTP_WEB_ROOT, linebuffer+sizeof("GET "));
-
-		//printf("resource: %s\n", ev->resource);		 //
+		sprintf(ev->resource, "%s", HTTP_WEB_ROOT);
+        printf("linebufff---------------->%s\n",linebuffer+sizeof("GET "));
+		printf("\nresource: %s\n", ev->resource);		 //
 		
 	} else if (strstr(linebuffer, "POST")) {
+        printf("\nresource: %s\n", ev->resource);
 		ev->method = HTTP_METHOD_POST;
 	}
 	
@@ -258,7 +259,7 @@ int recv_cb(int fd, int events, void *arg) {
 		ev->length = len;
 		ev->buffer[len] = '\0';
 
-		//printf("recv [%d]:%s\n", fd, ev->buffer);
+		printf("recv [%d]:%s\n", fd, ev->buffer);
 
 		nty_http_request(ev); // parser http hdr
 
@@ -280,7 +281,7 @@ int recv_cb(int fd, int events, void *arg) {
 			nty_event_del(reactor->epfd, ev);
 			close(ev->fd);
 		}
-		//printf("recv[fd=%d] error[%d]:%s\n", fd, errno, strerror(errno));
+		printf("recv[fd=%d] error[%d]:%s\n", fd, errno, strerror(errno));
 		
 	}
 
@@ -296,11 +297,11 @@ int send_cb(int fd, int events, void *arg) {
 	if (ev == NULL) return -1;
 
 	nty_http_response(ev); //encode
-
+    printf("ev--->buf : %s\n",ev->buffer);
 	int len = send(fd, ev->wbuffer, ev->wlength, 0);
 	if (len > 0) {
-		//printf("resource: %s\n", ev->resource);
-
+		printf("resource: %s\n", ev->resource);
+        printf("发送成功\n");
 		int filefd = open(ev->resource, O_RDONLY);
 		//if (filefd < 0) return -1;
 		
@@ -328,7 +329,7 @@ int send_cb(int fd, int events, void *arg) {
 		nty_event_add(reactor->epfd, EPOLLIN, ev);
 		
 	} else {
-
+        printf("发送失败\n");
 		nty_event_del(reactor->epfd, ev);
 		close(ev->fd);
 
@@ -592,7 +593,7 @@ int main(int argc, char *argv[]) {
 		sockfds[i] = init_sock(port+i);     //socket数组里面都是监听的fd
 		ntyreactor_addlistener(reactor, sockfds[i], accept_cb);//.......
 	}
-
+    printf("1\n");
 
 	ntyreactor_run(reactor);
 
@@ -606,6 +607,3 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
-
-
-
